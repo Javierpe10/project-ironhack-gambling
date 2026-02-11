@@ -145,7 +145,7 @@ GROUP BY MONTH(STR_TO_DATE(BetDate, "%d/%m/%Y")), YEAR(STR_TO_DATE(BetDate, "%d/
 ORDER BY month, year;
 
 /*3*/
-SELECT CustId, Title, FirstName, LastName, COALESCE(SUM(Bet_Amt),0) AS TotalBet
+SELECT customer.CustId, Title, FirstName, LastName, COALESCE(SUM(Bet_Amt),0) AS TotalBet
 FROM customer
 LEFT JOIN account
 ON customer.CustId = account.CustId
