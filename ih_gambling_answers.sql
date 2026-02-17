@@ -1,30 +1,20 @@
 USE ih_gambling;
 /*Question1*/
-/*Mostrar columnas especificas del archivo customer*/
 SELECT Title, FirstName, LastName, DateOfBirth
 FROM customer;
 
 /*Question2*/
-/*Contabilizar el total de customers de cada grupo establecido*/
 SELECT CustomerGroup, COUNT(*) AS NumberofCustomers
 FROM customer
 GROUP BY CustomerGroup;
 
 /*Question3*/
-/*Unir tablas para añadir Currency (account) a tabla customer*/
 SELECT customer.*, account.CurrencyCode
 FROM customer
 LEFT JOIN account
 ON customer.CustId = account.CustId;
 
 /*Question4*/
-/*Resumir total de apuestas segun la fecha y el producto*/
-SELECT AccountNo, BetDate, ClassId, CategoryId, Bet_Amt, Product
-FROM betting;
-
-SELECT *
-FROM product;
-
 SELECT BetDate, product.product, SUM(Bet_Amt) AS TotalBet
 FROM betting
 INNER JOIN product
@@ -34,8 +24,6 @@ GROUP BY product.product, BetDate
 ORDER BY BetDate, product.product;
 
 /*Question5*/
-/*Realizar cambios donde muestre solo transacciones luego del 1 de noviembre
-y del producto Sportsbook*/
 SELECT BetDate, product.product, SUM(Bet_Amt) AS TotalBet
 FROM betting
 INNER JOIN product
@@ -46,10 +34,6 @@ GROUP BY product.product, BetDate
 ORDER BY BetDate;
 
 /*Question6*/
-/*Cambios en la presentacion de productos, ahora relacionados
-a currencycode y customergroup y luego del 1 de diciembre*/
-/*Un customer ID puede tener varias cuentas, por lo que hay que JOIN segun las cuentas ya que
-desde ahi se hacen las apuestas*/
 SELECT product.product, account.CurrencyCode, customer.CustomerGroup, SUM(Bet_Amt) AS TotalBet
 FROM betting
 INNER JOIN  account
@@ -64,9 +48,6 @@ GROUP BY product.product, account.CurrencyCode, customer.CustomerGroup
 ORDER BY product.product, account.CurrencyCode, customer.CustomerGroup;
 
 /*Question7*/
-/*Mostrar a todos los jugadores sin importar si han hecho alguna apuesta o no
-y tienen que ser solo los del mes de noviembre.
-Tiene que mostrar Title, Nombre, apellido y el resumen de sus apuestas en ese periodo*/
 SELECT customer.CustId, Title, FirstName, LastName, COALESCE(SUM(Bet_Amt),0) AS TotalBet
 FROM customer
 LEFT JOIN account
@@ -77,8 +58,6 @@ AND STR_TO_DATE(BetDate, "%d/%m/%Y")  >= "2012/11/01" AND STR_TO_DATE(BetDate, "
 GROUP BY customer.CustId, customer.Title, customer.FirstName, customer.LastName;
 
 /*Question8*/
-/*1-Number of product per player*/
-/*2- Players who play Sportsbook and Vegas*/
 SELECT customer.CustId, Title, FirstName, LastName, COUNT(DISTINCT product.product) AS TotalProducts
 FROM customer
 INNER JOIN account
@@ -104,8 +83,6 @@ GROUP BY customer.CustId, Title, FirstName, LastName
 HAVING COUNT(DISTINCT product.product) = 2;
 
 /*Question9*/
-/*Players who only play Sportsbook, bet_amt > 0 as key*/
-
 SELECT customer.CustId, Title, FirstName, LastName, SUM(Bet_Amt) AS TotalBet
 FROM customer
 INNER JOIN account
@@ -121,7 +98,39 @@ HAVING COUNT(DISTINCT product.product) = 1
 AND MAX(product.product) = "Sportsbook";
 
 /*Question10*/
-/*Player favorite product*/
+SELECT
+    CustID,
+    FirstName,
+    LastName,
+    Product,
+    TotalBet
+FROM 
+(	SELECT
+        c.CustID,
+        c.FirstName,
+        c.LastName,
+        p.Product,
+        SUM(b.Bet_Amt) AS TotalBet,
+        RANK() OVER (
+            PARTITION BY c.CustID
+            ORDER BY SUM(b.Bet_Amt) DESC
+        ) AS rnk
+    FROM Customer c
+    LEFT JOIN Account a
+        ON c.CustID = a.CustId
+    LEFT JOIN Betting b
+        ON a.AccountNo = b.AccountNo
+    LEFT JOIN Product p
+        ON b.ClassId = p.ClassId
+       AND b.CategoryId = p.CategoryId
+    WHERE b.Bet_Amt > 0
+    GROUP BY
+        c.CustID,
+        c.FirstName,
+        c.LastName,
+        p.Product
+) ranked
+WHERE rnk = 1;
 
 /*EXTERNAL ANALYISIS*/
 /*1- What product its more productive?(EXCERCISE4)*/
